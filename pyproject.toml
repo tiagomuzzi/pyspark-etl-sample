@@ -6,7 +6,7 @@ authors = ["Felipe <Mendonca>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<4.0"
+python = ">=3.6,<4.0"
 pyspark = "^3.1.2"
 
 [tool.poetry.dev-dependencies]

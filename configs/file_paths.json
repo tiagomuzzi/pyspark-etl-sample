@@ -1,0 +1,6 @@
+{
+    "generic_events": "datasets/generic_events.json",
+    "app_loading_events": "datasets/app_loading_events",
+    "user_registration_events": "datasets/user_registration_events",
+    "output_path": ".outputs/user_activity"
+}
