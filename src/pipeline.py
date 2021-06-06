@@ -10,7 +10,7 @@ from schemas import generic_event_schema
 
 def extract(
     spark: SparkSession,
-    file_paths: Dict
+    file_paths: Dict,
 ) -> Tuple[DataFrame, DataFrame]:
     """Reads `generic_events` JSON file, creates `app_loading_events` and
     `user_registration_events` datasets, loades them in Parquet format,
@@ -24,20 +24,8 @@ def extract(
         path=file_paths['generic_events'],
         schema=generic_event_schema)
 
-    generic_events.printSchema()
-
     app_loading_events = generic_events\
-        .filter(
-            F.col('event').eqNullSafe('app_loaded')
-        )\
-        .select(
-            F.col('timestamp').cast('timestamp').alias('time'),
-            F.col('initiator_id'),
-            F.col('device_type'),
-        )
-
-    app_loading_events = generic_events\
-        .filter(F.col('event').eqNullSafe('app_loaded'))\
+        .filter("event = 'app_loaded'")\
         .select(
             F.col('timestamp').cast('timestamp').alias('time'),
             F.col('initiator_id'),
@@ -47,7 +35,7 @@ def extract(
         .parquet(file_paths['app_loading_events'])
 
     user_registration_events = generic_events\
-        .filter(F.col('event').eqNullSafe('registered'))\
+        .filter("event = 'registered'")\
         .select(
             F.col('timestamp').cast('timestamp').alias('time'),
             F.col('initiator_id'),
@@ -69,7 +57,6 @@ def transform(
     """Transform the data for final loading.
     :param app_loading_events: Incremental DataFrame.
     :param user_registration_events: Final DataFrame.
-    :param file_paths: job configuration
     :return: Transformed DataFrame.
     """
 
@@ -94,14 +81,18 @@ def transform(
     app_loaded_week = sun_year_week('app_loaded_at')
 
     transformed = joined\
-        .withColumn('is_active', registered_week > app_loaded_week)\
+        .withColumn('is_active', registered_week < app_loaded_week)
+
+    transformed = transformed\
         .groupBy('is_active')\
         .agg(F.countDistinct('id').alias('unique_ids'))
 
     total_unique_ids = F.sum('unique_ids').over(Window.partitionBy())
 
-    return transformed\
+    transformed = transformed\
         .withColumn('percent', F.col('unique_ids') / total_unique_ids)
+
+    return transformed
 
 
 def load(user_activity: DataFrame, file_paths: Dict) -> True:
@@ -122,9 +113,7 @@ def run(spark: SparkSession, file_paths: Dict) -> bool:
 
     :param spark: SparkSession object
     :param file_paths: job configurations and command lines
-    :type config: Dict
     :return: True
-    :rtype: bool
     """
     app_loading_events, user_registration_events = extract(
         spark=spark,
