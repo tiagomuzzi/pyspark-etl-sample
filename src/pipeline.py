@@ -87,7 +87,7 @@ def transform(
         .groupBy('is_active')\
         .agg(F.countDistinct('id').alias('unique_ids'))
 
-    total_unique_ids = F.sum('unique_ids').over(Window.partitionBy())
+    total_unique_ids = F.sum('unique_ids').over(Window.partitionBy('is_active'))
 
     transformed = transformed\
         .withColumn('percent', F.col('unique_ids') / total_unique_ids)
