@@ -1,20 +1,23 @@
 all: build run
 
 THIS_DIR := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+DOCKER_TAG ?= pyspark-etl-sample
 
-
-lint: ## check style with pylint
-	@echo "Linting started"
-	@poetry run pylint app_events/
+requirements:
+	poetry export --with-credentials --without-hashes \
+	-f requirements.txt \
+	-o requirements.txt
 
 build:
-	docker build . -t fysp/pyspark-etl-sample
+	make requirements
+	docker build . -t $(DOCKER_TAG)
 
 run:
-	echo $(THIS_DIR)
 	docker run \
 	-v $(THIS_DIR)/datasets/:/opt/application/datasets/ \
 	-v $(THIS_DIR)/.outputs/:/opt/application/.outputs/ \
-	fysp/pyspark-etl-sample \
-	driver local:///opt/application/main.py \
-	--log-level=warn
+	$(DOCKER_TAG) \
+	driver local:///opt/application/main.py
+
+lint:
+	poetry run python -m pylint src

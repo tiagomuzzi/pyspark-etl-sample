@@ -1,4 +1,5 @@
-from typing import Dict, Tuple, Any
+"""main module."""
+from typing import Dict
 import json
 
 from pyspark.sql import SparkSession
@@ -11,13 +12,11 @@ def create_spark_session(job_name: str) -> SparkSession:
     :param job_name: Job name
     :return: Spark Session
     """
-    spark = (SparkSession
+    return (SparkSession
         .builder
         .appName(job_name)
         .enableHiveSupport()
         .getOrCreate())
-
-    return spark
 
 
 def load_config_file(file_name: str) -> Dict:
@@ -26,14 +25,9 @@ def load_config_file(file_name: str) -> Dict:
     :param file_name: name of the config file
     :return: Config Mapping
     """
-    try:
-        with open(f'{file_name}') as f:
-            conf: Dict = json.load(f)
-        return conf
-
-    except FileNotFoundError:
-        raise FileNotFoundError(f'{file_name} Not found')
-
+    with open(file_name) as file_stream:
+        conf: Dict = json.load(file_stream)
+    return conf
 
 if __name__ == '__main__':
     spark = create_spark_session('userActivity')

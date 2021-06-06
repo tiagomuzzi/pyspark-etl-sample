@@ -1,3 +1,4 @@
+"""pipeline module."""
 from typing import Dict, Tuple
 
 from pyspark.sql import DataFrame, SparkSession
@@ -8,10 +9,12 @@ from schemas import generic_event_schema
 
 
 def extract(
-    spark: SparkSession, 
+    spark: SparkSession,
     file_paths: Dict
 ) -> Tuple[DataFrame, DataFrame]:
-    """Reads `generic_events` JSON file, creates
+    """Reads `generic_events` JSON file, creates `app_loading_events` and
+    `user_registration_events` datasets, loades them in Parquet format,
+    reads them back and return.
 
     :param spark: Spark session object.
     :param file_paths: File Paths Mapping
@@ -60,7 +63,7 @@ def extract(
 
 
 def transform(
-    app_loading_events: DataFrame, 
+    app_loading_events: DataFrame,
     user_registration_events: DataFrame,
 ) -> DataFrame:
     """Transform the data for final loading.
@@ -107,7 +110,10 @@ def load(user_activity: DataFrame, file_paths: Dict) -> True:
     :param file_paths: job configuration
     :return: True
     """
-    user_activity.write.save(path=file_paths['output_path'], mode='overwrite')
+    user_activity\
+        .write.mode('overwrite')\
+        .csv(path=file_paths['output_path'], mode='overwrite')
+
     return True
 
 
@@ -121,7 +127,7 @@ def run(spark: SparkSession, file_paths: Dict) -> bool:
     :rtype: bool
     """
     app_loading_events, user_registration_events = extract(
-        spark=spark, 
+        spark=spark,
         file_paths=file_paths)
 
     user_activity = transform(
