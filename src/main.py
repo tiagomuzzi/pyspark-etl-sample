@@ -7,15 +7,14 @@ import pipeline
 
 
 def create_spark_session(job_name: str) -> SparkSession:
-    """Create spark session to run the job.
+    """Gets or Creates SparkSession.
 
     :param job_name: Job name
-    :return: Spark Session
+    :return: SparkSession
     """
     return (SparkSession
         .builder
         .appName(job_name)
-        .enableHiveSupport()
         .getOrCreate())
 
 
